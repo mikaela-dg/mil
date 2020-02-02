@@ -37,6 +37,8 @@ add_service_files(FILES
   CameraToLidarTransform.srv
   SetGeometry.srv
   ObjectDBQuery.srv
+  Enable.srv
+  Disable.srv
 )
 
 generate_messages(
