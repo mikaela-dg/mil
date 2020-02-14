@@ -125,12 +125,15 @@ class HydrophoneInterpreter:
 
         if self.trigger_debug.enabled:
             plot_data = data[(window_size-1): data.shape[0],0]
+            titles = ['time vs Gradient of Max convolve',
+                      'time vs max_convolve (Window = %s sec)'%self.window_time,
+                      'time vs hydrophone0 data']
             plotable = np.vstack((gradient, max_convolve, plot_data)).transpose()
             plots = [None] * plotable.shape[1]
             for i in xrange(plotable.shape[1]):
                 plots[i] = np.vstack((time, plotable[:,i]))
             plots = np.vstack(tuple(plots))
-            self.trigger_debug.publish_plots(plots)
+            self.trigger_debug.publish_plots(plots, titles)
 
         if self.sample_at_trigger_debug.enabled and triggered_at_idx:
             max_delta_idx = int(self.max_hydrophone_dist / self.speed_of_sound * ping.sample_rate)

@@ -34,17 +34,17 @@ class MilRosPlotter:
         self.enabled = False
 
 
-    def publish_plots(self, plots):
+    def publish_plots(self, plots, titles=[]):
         if not self.enabled:
             return
         if (self.thread is not None) and self.thread.is_alive():
             return
-        self.thread = threading.Thread(target=self.publish_plots_, args=(plots,))
+        self.thread = threading.Thread(target=self.publish_plots_, args=(plots,titles))
         self.thread.daemon = True
         self.thread.start()
 
 
-    def publish_plots_(self, plots):
+    def publish_plots_(self, plots, titles=[]):
 
         num_of_plots = plots.shape[0]/2
 
@@ -52,6 +52,8 @@ class MilRosPlotter:
             self.fig.add_subplot(num_of_plots, 1, i)
         for i, ax in enumerate(self.fig.axes):
             ax.plot(plots[i*2,:], plots[i*2+1,:])
+            if i < len(titles):
+                ax.set_title(titles[i])
         self.canvas.draw()
 
         s, (w, h) = self.canvas.print_to_buffer()
