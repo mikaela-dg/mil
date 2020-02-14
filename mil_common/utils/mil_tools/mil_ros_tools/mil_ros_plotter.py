@@ -1,8 +1,7 @@
 import rospy
 import numpy as np
 from sensor_msgs.msg import Image
-from mil_msgs.srv import Enable, EnableResponse
-from mil_msgs.srv import Disable, DisableResponse
+from std_srvs.srv import SetBool, SetBoolResponse
 import cv2
 from cv_bridge import CvBridge
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -18,20 +17,15 @@ class MilRosPlotter:
         self.bridge = CvBridge()
         self.fig = Figure(figsize=(w,h), dpi=dpi)
         self.canvas = FigureCanvasAgg(self.fig)
-        self.enabled = False
+        self.enabled = True
         self.thread = None
 
-        rospy.Service(('/enable_%s'%topic_name), Enable, self.enable)
-        rospy.Service(('/disable_%s'%topic_name), Enable, self.disable)
+        rospy.Service(('/enable_%s'%topic_name), SetBool, self.enable_disable)
 
 
-    def enable(self, req):
-        self.enabled = True
-        return EnableResponse(success=True)
-
-
-    def disable(self, req):
-        self.enabled = False
+    def enable_disable(self, req):
+        self.enabled = req.data
+        return SetBoolResponse(success=True)
 
 
     def publish_plots(self, plots, titles=[]):
