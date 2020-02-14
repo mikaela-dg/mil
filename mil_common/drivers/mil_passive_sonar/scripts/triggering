@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 from rospy.numpy_msg import numpy_msg
 
-from mil_passive_sonar.msg import Ping
+from mil_passive_sonar.msg import HydrophoneSamples
 from mil_ros_tools.mil_ros_plotter import MilRosPlotter
 
 
@@ -18,7 +18,7 @@ class HydrophoneInterpreter:
     def __init__(self):
         #  Ros stuff
         rospy.init_node('triggering', log_level=rospy.DEBUG)
-        self.sub = rospy.Subscriber('/samples', numpy_msg(Ping), self.hydrophones_cb)
+        self.sub = rospy.Subscriber('/samples', numpy_msg(HydrophoneSamples), self.hydrophones_cb)
 
         # Attriburtes about our general frequency range (all pinger live here)
         #  Frequency range garunteed to be relatively quiet except for the pingers (in Hz)
@@ -48,16 +48,17 @@ class HydrophoneInterpreter:
         # Debug attributes
         #  Debug plot publishers
         self.fft_debug = MilRosPlotter('fft_debug')
+        self.fft_debug.enabled = False
         self.trigger_debug = MilRosPlotter('trigger_debug')
         self.sample_at_trigger_debug = MilRosPlotter('sample_at_trigger_debug')
 
         # Misc attributes
         #  minimum gradient of the max convolution wrt time to trigger a time of arivals calcualtion
-        self.threshold = 3000
-        #  expected error in determining exactly where the triggering happend (after)
-        self.trigger_time_error_future = 1
-        #  expected error in determining exactly where the triggering happend (before)
-        self.trigger_time_error_past = 7
+        self.threshold = 40
+        #  expected error in determining exactly where the triggering happend (after) in sec
+        self.trigger_time_error_future = 0.0003
+        #  expected error in determining exactly where the triggering happend (before) in sec
+        self.trigger_time_error_past = 0.0003
         #  prev data buffer
         self.prev_data = None
         # time (from start of samples)
@@ -119,12 +120,12 @@ class HydrophoneInterpreter:
         gradient = np.gradient(max_convolve, axis=0)
 
         triggered_at_idx = False
-        if np.max(gradient >= self.threshold):
-            print 'triggered at ', time[np.argmax(gradient)]
-            triggered_at_idx = np.argmax(gradient)
+        if np.max(gradient) >= self.threshold:
+            print 'triggered at ', time[np.min(np.where(gradient >= self.threshold)[0])]
+            triggered_at_idx = np.min(np.where(gradient >= self.threshold)[0])
 
         if self.trigger_debug.enabled:
-            plot_data = data[(window_size-1): data.shape[0],0]
+            plot_data = data[(window_size-1):data.shape[0],0]
             titles = ['time vs Gradient of Max convolve',
                       'time vs max_convolve (Window = %s sec)'%self.window_time,
                       'time vs hydrophone0 data']
@@ -136,11 +137,10 @@ class HydrophoneInterpreter:
             self.trigger_debug.publish_plots(plots, titles)
 
         if self.sample_at_trigger_debug.enabled and triggered_at_idx:
-            max_delta_idx = int(self.max_hydrophone_dist / self.speed_of_sound * ping.sample_rate)
             plot_data = data[(window_size-1): data.shape[0]]
 
-            start = triggered_at_idx - max_delta_idx*self.trigger_time_error_past
-            end = triggered_at_idx + max_delta_idx*self.trigger_time_error_future
+            start = triggered_at_idx - int(ping.sample_rate*self.trigger_time_error_past)
+            end = triggered_at_idx + int(ping.sample_rate*self.trigger_time_error_future)
 
             plot_data = plot_data[start:end]
             plot_time = time[start:end]

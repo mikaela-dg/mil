@@ -1,8 +1,8 @@
 /* ROS node to read in the TCP stream produced by the Sylphase passive sonar board
- * and publish it to ROS as a mil_passive_sonar/Ping message
+ * and publish it to ROS as a mil_passive_sonar/HydrophoneSamples message
  */
 #include <arpa/inet.h>
-#include <mil_passive_sonar/Ping.h>
+#include <mil_passive_sonar/HydrophoneSamples.h>
 #include <ros/ros.h>
 #include <boost/asio.hpp>
 
@@ -29,7 +29,7 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle private_nh_;
   ros::Publisher pub_;
-  mil_passive_sonar::Ping msg;
+  mil_passive_sonar::HydrophoneSamples msg;
   std::string frame_id_;
   std::string ip_;
   int port_;
@@ -62,7 +62,7 @@ void SylphaseSonarToRosNode::run()
 SylphaseSonarToRosNode::SylphaseSonarToRosNode(ros::NodeHandle nh, ros::NodeHandle private_nh)
   : nh_(nh), private_nh_(private_nh)
 {
-  pub_ = nh.advertise<mil_passive_sonar::Ping>("samples", 1);
+  pub_ = nh.advertise<mil_passive_sonar::HydrophoneSamples>("samples", 1);
   ip_ = private_nh.param<std::string>("ip", std::string("127.0.0.1"));
   port_ = private_nh.param<int>("port", 10001);
   frame_id_ = private_nh.param<std::string>("frame", "hydrophones");
@@ -87,7 +87,7 @@ void SylphaseSonarToRosNode::read_messages(boost::asio::ip::tcp::socket& socket)
   const size_t BYTES_TO_CAPTURE = sizeof(uint16_t) * SAMPLES_TO_CAPTURE;
 
   // Pre-allocate message
-  mil_passive_sonar::Ping msg;
+  mil_passive_sonar::HydrophoneSamples msg;
   msg.header.frame_id = frame_id_;
   msg.header.seq = 0;
   msg.channels = CHANNELS;
