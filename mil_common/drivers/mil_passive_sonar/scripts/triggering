@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-# Ros node to filter the hydrophone sonar samples
 import rospy
 import numpy as np
 from rospy.numpy_msg import numpy_msg
-
 from mil_passive_sonar.msg import HydrophoneSamples
-from mil_ros_tools.mil_ros_plotter import MilRosPlotter
-
+from mil_ros_tools import Plotter
 
 from scipy.fftpack import rfft
 from scipy.signal import remez, fftconvolve, correlate
@@ -47,10 +44,10 @@ class HydrophoneInterpreter:
 
         # Debug attributes
         #  Debug plot publishers
-        self.fft_debug = MilRosPlotter('fft_debug')
+        self.fft_debug = Plotter('fft_debug')
         self.fft_debug.enabled = False
-        self.trigger_debug = MilRosPlotter('trigger_debug')
-        self.sample_at_trigger_debug = MilRosPlotter('sample_at_trigger_debug')
+        self.trigger_debug = Plotter('trigger_debug')
+        self.sample_at_trigger_debug = Plotter('sample_at_trigger_debug')
 
         # Misc attributes
         #  minimum gradient of the max convolution wrt time to trigger a time of arivals calcualtion
