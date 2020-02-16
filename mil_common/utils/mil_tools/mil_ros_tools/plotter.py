@@ -74,6 +74,12 @@ class Plotter:
         return SetBoolResponse(success=True)
 
 
+    def is_go(self):
+        return self.enabled and\
+               self.pub.get_num_connections() and\
+               (self.thread is None or not self.thread.is_alive())
+
+
     def publish_plots(self, plots, titles=[]):
         if self.pub.get_num_connections() == 0:
             return
@@ -99,7 +105,7 @@ class Plotter:
         self.canvas.draw()
 
         s, (w, h) = self.canvas.print_to_buffer()
-
+        self.fig.clf()
         img = np.fromstring(s, np.uint8).reshape(w, h, 4)
 
         img = np.roll(img, 3, axis = 2)
